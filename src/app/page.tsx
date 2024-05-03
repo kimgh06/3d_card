@@ -63,7 +63,7 @@ function Card({ url, position, type }: { url: string, position: Vector3, type?: 
       }
       if (ref.current.rotation.y % (Math.PI * 2) > Math.PI) {
         ref.current.rotation.y = Math.PI;
-        ref.current.position.y = position[1];
+        ref.current.position.y = position[1 as keyof Vector3];
         // console.log(position[1])
       }
     }
@@ -78,7 +78,7 @@ function Card({ url, position, type }: { url: string, position: Vector3, type?: 
       }
       if (ref.current.rotation.y % (Math.PI * 2) < Math.PI) {
         ref.current.rotation.y = 0;
-        ref.current.position.y = position[1];
+        ref.current.position.y = position[1 as keyof Vector3];
       }
     }
   })
