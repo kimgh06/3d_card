@@ -6,15 +6,20 @@ import './page.scss';
 import { Box, CameraControls, Image, OrbitControls } from "@react-three/drei";
 
 export default function Home() {
-  let Library = ['./textures/ac_right_hand.png', './textures/ac_body.png', './textures/ac_left_hand.png', './textures/ac_left_hand.png', './textures/ac_right_leg.png'];
+  let Library = [
+    './textures/ac_right_hand.png',
+    './textures/ac_body.png',
+    './textures/ac_left_hand.png',
+    './textures/ac_left_hand.png',
+    './textures/ac_right_leg.png',
+  ];
   let creatures, lands, hand, graveyard;
   return (
     <Canvas>
       <Suspense>
         {Library.map((i: string, n: number) =>
-          <Card key={n} url={i} position={[0, -0.01 * n - 1, 0]} type={n === 0 ? 'flip' : ''} />
+          <Card key={n} url={i} position={[0, -0.01 * n - 1, 0]} type={n === 0 ? 'top' : ''} />
         )}
-        {/* <OrbitControls /> */}
         <Cam />
       </Suspense>
     </Canvas>
@@ -24,23 +29,10 @@ export default function Home() {
 function Cam() {
   const camcontrolRef = useRef<CameraControls | null>(null);
   useFrame(() => {
-    // if (camcontrolRef.current) {
-    //   const camposi: Vector3 = camcontrolRef.current.getPosition();
-    //   console.log(camposi)
-    // camcontrolRef.current.rotate(Math.PI / 4, 0, true);
-    // camcontrolRef.current.zoom(-1, true);
-    // }
-  });
-  useEffect(() => {
     if (camcontrolRef.current) {
-      let posi = []
-      camcontrolRef.current.setPosition(0, 2, 3);
-      const camposi = camcontrolRef.current.getPosition();
-      console.log(camposi.x, camposi.y, camposi.z)
-      // camcontrolRef.current.rotate(Math.PI / 4, 0, true);
-      // camcontrolRef.current.zoom(-1, true);
+      camcontrolRef.current.setPosition(0, 5, 1);
     }
-  }, [])
+  });
   return <CameraControls ref={camcontrolRef} />
 }
 
@@ -48,37 +40,47 @@ function Card({ url, position, type }: { url: string, position: Vector3, type?: 
   const ref = useRef<Mesh | null>(null);
   const [turning, setTurning] = useState<boolean>(false);
   const [isFliped, setIsFliped] = useState<boolean>(true);
-  useFrame((_, delta: number) => {
-    if (ref?.current?.rotateY === undefined || !turning || type !== 'flip') {
+  const [drag, setDrag] = useState<boolean>(false);
+  const [down, setDown] = useState<boolean>(false);
+  useFrame((state, delta: number) => {
+    // console.log(state.pointer)
+    if (!ref.current) {
       return;
     }
-    if (!isFliped) {
-      if (ref.current.rotation.y % (Math.PI * 2) < Math.PI) {
-        ref.current.rotation.y += (Math.PI + 1) / 60;
-        if (ref.current.rotation.y % (Math.PI * 2) <= Math.PI / 2) {
-          ref.current.position.y += 0.05
-        } else {
-          ref.current.position.y -= 0.05
-        }
-      }
-      if (ref.current.rotation.y % (Math.PI * 2) > Math.PI) {
-        ref.current.rotation.y = Math.PI;
-        ref.current.position.y = position[1 as keyof Vector3];
-        // console.log(position[1])
-      }
+    if (drag && type === 'top') {
+      console.log(state.pointer);
+      console.log(ref.current.position.x, ref.current.position.z, state.pointer.x, state.pointer.y, window.innerWidth / 2, window.innerHeight / 2)
+      ref.current.position.x = state.pointer.x * window.innerWidth / 200;
+      ref.current.position.z = -state.pointer.y * window.innerHeight / 200;
     }
-    if (isFliped) {
-      if (ref.current.rotation.y % (Math.PI * 2) >= Math.PI) {
-        ref.current.rotation.y += (Math.PI + 1) / 60;
-        if (ref.current.rotation.y % (Math.PI * 2) <= 3 * Math.PI / 2) {
-          ref.current.position.y += 0.05
-        } else {
-          ref.current.position.y -= 0.05
+    if (turning && type === 'top') {
+      if (!isFliped) {
+        if (ref.current.rotation.y % (Math.PI * 2) < Math.PI) {
+          ref.current.rotation.y += (Math.PI + 1) / 60;
+          if (ref.current.rotation.y % (Math.PI * 2) <= Math.PI / 2) {
+            ref.current.position.y += 0.05
+          } else {
+            ref.current.position.y -= 0.05
+          }
+        }
+        if (ref.current.rotation.y % (Math.PI * 2) > Math.PI) {
+          ref.current.rotation.y = Math.PI;
+          ref.current.position.y = position[1 as keyof Vector3];
         }
       }
-      if (ref.current.rotation.y % (Math.PI * 2) < Math.PI) {
-        ref.current.rotation.y = 0;
-        ref.current.position.y = position[1 as keyof Vector3];
+      else if (isFliped) {
+        if (ref.current.rotation.y % (Math.PI * 2) >= Math.PI) {
+          ref.current.rotation.y += (Math.PI + 1) / 60;
+          if (ref.current.rotation.y % (Math.PI * 2) <= 3 * Math.PI / 2) {
+            ref.current.position.y += 0.05
+          } else {
+            ref.current.position.y -= 0.05
+          }
+        }
+        if (ref.current.rotation.y % (Math.PI * 2) < Math.PI) {
+          ref.current.rotation.y = 0;
+          ref.current.position.y = position[1 as keyof Vector3];
+        }
       }
     }
   })
@@ -95,12 +97,15 @@ function Card({ url, position, type }: { url: string, position: Vector3, type?: 
   }, [turning])
   return (
     <>
-      <mesh ref={ref} position={position}>
+      <mesh ref={ref} onPointerDown={e => setDown(true)} onPointerMove={e => down && setDrag(true)} onPointerUp={e => {
+        setDown(false);
+        setDrag(false);
+      }} position={position}>
         <ambientLight intensity={0.2} />
         <directionalLight />
         <Image scale={[1, 1.618]} url={url} />
         <Box onClick={() => {
-          if (turning) {
+          if (turning || drag) {
             return;
           }
           setTurning(true);
