@@ -1,25 +1,27 @@
 "use client"
-import { Canvas, Vector3, useFrame } from "@react-three/fiber";
+import { Canvas, Vector2, Vector3, useFrame } from "@react-three/fiber";
 import { Mesh, TextureLoader } from "three";
 import { Suspense, useEffect, useRef, useState } from "react";
 import './page.scss';
 import { Box, CameraControls, Image, OrbitControls } from "@react-three/drei";
+import { CardRefStore, CardStore } from './store';
 
 export default function Home() {
   let Library = [
+    './textures/ac_right_leg.png',
     './textures/ac_right_hand.png',
     './textures/ac_body.png',
     './textures/ac_left_hand.png',
-    './textures/ac_left_hand.png',
-    './textures/ac_right_leg.png',
+    './textures/ac_left_leg.png',
   ];
   let creatures, lands, hand, graveyard;
   return (
     <Canvas>
       <Suspense>
         {Library.map((i: string, n: number) =>
-          <Card key={n} url={i} position={[0, -0.01 * n - 1, 0]} type={n === 0 ? 'top' : ''} />
+          <Card key={n} id={n.toString()} url={i} position={[-2 + n * 1.2, 0, 2]} type={n === 0 ? 'top' : 'top'} />
         )}
+        <Field />
         <Cam />
       </Suspense>
     </Canvas>
@@ -36,22 +38,53 @@ function Cam() {
   return <CameraControls ref={camcontrolRef} />
 }
 
-function Card({ url, position, type }: { url: string, position: Vector3, type?: string }) {
+function Field({ position = [0, 0, 0] }: { position?: Vector3 }) {
   const ref = useRef<Mesh | null>(null);
-  const [turning, setTurning] = useState<boolean>(false);
+  const { cardNumber } = CardStore(e => e);
+  const { refs, setRefPosition } = CardRefStore(e => e);
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.rotation.x = Math.PI / 2
+      ref.current.rotation.z = Math.PI
+    }
+  }, [])
+  return (
+    <>
+      <mesh ref={ref} position={position}
+        onPointerLeave={() => {
+          console.log('leave')
+        }}
+        onPointerUp={() => {
+          if (!cardNumber || !position) {
+            return;
+          }
+          setRefPosition(cardNumber, position);
+        }}
+      >
+        <ambientLight intensity={0.2} />
+        <directionalLight />
+        <Box args={[1, 1.618, 0.001]} position={[0, 0, 0.01]} material-color={'white'} />
+      </mesh>
+    </>
+  )
+}
+
+function Card({ id, url, position, type }: { id: string, url: string, position: Vector3, type?: string }) {
+  const ref = useRef<Mesh | null>(null);
+  const [turning, setTurning] = useState<boolean | Vector2>(false);
   const [isFliped, setIsFliped] = useState<boolean>(true);
   const [drag, setDrag] = useState<boolean>(false);
-  const [down, setDown] = useState<boolean>(false);
+  const [down, setDown] = useState<null | number[]>(null);
+  const { setCardNumber } = CardStore(e => e);
+  const { setRef, refs } = CardRefStore(e => e);
   useFrame((state, delta: number) => {
-    // console.log(state.pointer)
     if (!ref.current) {
       return;
     }
     if (drag && type === 'top') {
-      console.log(state.pointer);
-      console.log(ref.current.position.x, ref.current.position.z, state.pointer.x, state.pointer.y, window.innerWidth / 2, window.innerHeight / 2)
-      ref.current.position.x = state.pointer.x * window.innerWidth / 200;
+      ref.current.position.x = state.pointer.x * window.innerWidth / 240;
       ref.current.position.z = -state.pointer.y * window.innerHeight / 200;
+      setRef(id, ref.current)
     }
     if (turning && type === 'top') {
       if (!isFliped) {
@@ -87,18 +120,38 @@ function Card({ url, position, type }: { url: string, position: Vector3, type?: 
   useEffect(() => {
     if (turning) {
       setTimeout(() => {
-        setTurning(false)
-      }, 1000);
+        setTurning(false);
+        setDown(null);
+      }, 500);
     }
     if (ref.current) {
       ref.current.rotation.x = Math.PI / 2
       ref.current.rotation.z = Math.PI
     }
+    if (!refs[id]) {
+      setRef(id, ref.current)
+    }
   }, [turning])
+  useEffect(() => {
+    // console.log(id, refs[id]?.position)
+    ref.current = refs[id]
+  }, [refs])
   return (
     <>
-      <mesh ref={ref} onPointerDown={e => setDown(true)} onPointerMove={e => down && setDrag(true)} onPointerUp={e => {
-        setDown(false);
+      <mesh ref={ref} onPointerDown={e => {
+        setDown([e.pointer.x, e.pointer.y]);
+      }} onPointerMove={e => {
+        if (down === null) {
+          setCardNumber(null);
+          return;
+        }
+        const range = 0.01;
+        if (down[0] - e.pointer.x > range || down[0] - e.pointer.x < -range || down[1] - e.pointer.y > range || down[1] - e.pointer.y < -range) {
+          setDrag(true);
+          setCardNumber(id);
+        }
+      }} onPointerUp={e => {
+        setDown(null);
         setDrag(false);
       }} position={position}>
         <ambientLight intensity={0.2} />
