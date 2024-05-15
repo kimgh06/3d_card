@@ -27,7 +27,6 @@ export const CardRefStore = create<Refs>((set) => ({
     const mesh = state.refs[key];
     if (mesh) {
       mesh.position.x = position[0 as keyof Vector3]
-      mesh.position.y = position[1 as keyof Vector3]
       mesh.position.z = position[2 as keyof Vector3]
     }
     return ({

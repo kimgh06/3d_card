@@ -21,7 +21,11 @@ export default function Home() {
         {Library.map((i: string, n: number) =>
           <Card key={n} id={n.toString()} url={i} position={[-2 + n * 1.2, 0, 2]} type={n === 0 ? 'top' : 'top'} />
         )}
-        <Field />
+        <Field position={[-2, 0, -1]} />
+        <Field position={[0, 0, -1]} />
+        <Field position={[2, 0, -1]} />
+        <Field position={[-1, 0, 1]} />
+        <Field position={[1, 0, 1]} />
         <Cam />
       </Suspense>
     </Canvas>
@@ -51,9 +55,6 @@ function Field({ position = [0, 0, 0] }: { position?: Vector3 }) {
   return (
     <>
       <mesh ref={ref} position={position}
-        onPointerLeave={() => {
-          console.log('leave')
-        }}
         onPointerUp={() => {
           if (!cardNumber || !position) {
             return;
@@ -87,13 +88,14 @@ function Card({ id, url, position, type }: { id: string, url: string, position: 
       setRef(id, ref.current)
     }
     if (turning && type === 'top') {
+      const upping = 0.07;
       if (!isFliped) {
         if (ref.current.rotation.y % (Math.PI * 2) < Math.PI) {
           ref.current.rotation.y += (Math.PI + 1) / 60;
           if (ref.current.rotation.y % (Math.PI * 2) <= Math.PI / 2) {
-            ref.current.position.y += 0.05
+            ref.current.position.y += upping
           } else {
-            ref.current.position.y -= 0.05
+            ref.current.position.y -= upping
           }
         }
         if (ref.current.rotation.y % (Math.PI * 2) > Math.PI) {
@@ -105,9 +107,9 @@ function Card({ id, url, position, type }: { id: string, url: string, position: 
         if (ref.current.rotation.y % (Math.PI * 2) >= Math.PI) {
           ref.current.rotation.y += (Math.PI + 1) / 60;
           if (ref.current.rotation.y % (Math.PI * 2) <= 3 * Math.PI / 2) {
-            ref.current.position.y += 0.05
+            ref.current.position.y += upping
           } else {
-            ref.current.position.y -= 0.05
+            ref.current.position.y -= upping
           }
         }
         if (ref.current.rotation.y % (Math.PI * 2) < Math.PI) {
