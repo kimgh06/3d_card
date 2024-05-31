@@ -3,7 +3,7 @@ import { Canvas, Vector2, Vector3, useFrame } from "@react-three/fiber";
 import { Mesh, TextureLoader } from "three";
 import { Suspense, useEffect, useRef, useState } from "react";
 import './page.scss';
-import { Box, CameraControls, Image, OrbitControls } from "@react-three/drei";
+import { Box, CameraControls, Image, OrbitControls, Stats } from "@react-three/drei";
 import { CardRefStore, CardStore } from './store';
 
 export default function Home() {
@@ -27,6 +27,7 @@ export default function Home() {
         <Field position={[-1, 0, 1]} />
         <Field position={[1, 0, 1]} />
         <Cam />
+        <Stats />
       </Suspense>
     </Canvas>
   );
